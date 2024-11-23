@@ -5,10 +5,25 @@ import {
   Text,
   Image,
   StyleSheet,
-  TouchableOpacity,
+  TouchableOpacity
 } from 'react-native';
 import Checkbox from 'expo-checkbox';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+
+// 이미 초기화된 Firebase 앱 가져오기
+const firebaseConfig = {
+  apiKey: "AIzaSyDxS0aZWTzkheXsEq8DYibL6jGiCgBCQqA",
+  authDomain: "hannoti-b64b6.firebaseapp.com",
+  projectId: "hannoti-b64b6",
+  storageBucket: "hannoti-b64b6.firebasestorage.app",
+  messagingSenderId: "794157966201",
+  appId: "1:794157966201:web:63e1facff94f3e5f9b45a8"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
 const LoginScreen = ({ onLoginSuccess }) => {
   const [username, setUsername] = useState('');
@@ -34,24 +49,21 @@ const LoginScreen = ({ onLoginSuccess }) => {
 
   // 로그인 처리
   const handleLogin = async () => {
-    if (username === '2412345' && password === 'password') {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, `${username}@hansung.ac.kr`, password);
       if (rememberMe) {
-        // 로그인 데이터 저장
         await AsyncStorage.setItem('username', username);
         await AsyncStorage.setItem('password', password);
         await AsyncStorage.setItem('rememberMe', 'true');
       } else {
-        // 데이터 초기화
         await AsyncStorage.removeItem('username');
         await AsyncStorage.removeItem('password');
         await AsyncStorage.setItem('rememberMe', 'false');
       }
-      onLoginSuccess();
-    } else {
-      setError(
-        '학번 또는 패스워드가 잘못되었습니다. 학번과 패스워드를 정확히 입력해주세요.'
-      );
-      setUsername('');
+      onLoginSuccess(userCredential.user);
+    } catch (error) {
+      console.log(error);
+      setError('학번 또는 패스워드가 잘못되었습니다. 학번과 패스워드를 정확히 입력해주세요.');
       setPassword('');
     }
   };
